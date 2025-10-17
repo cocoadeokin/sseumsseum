@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback, forwardRef } from 'react';
-import { Plus, Upload, MoreVertical, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Plus, Upload, MoreVertical, TrendingDown, TrendingUp, Wallet, Download } from 'lucide-react';
+import { downloadTemplateCSV } from '../../api/transactionApi';
 import useTransactionStore from '../../store/transactionStore';
 import dayjs from 'dayjs';
 
@@ -111,6 +112,28 @@ export default function TransactionPage() {
   const handleAddNew = () => { setEditingTransaction(null); setIsModalOpen(true); };
   const handleEdit = (transaction: Transaction) => { setEditingTransaction(transaction); setIsModalOpen(true); };
   const handleDelete = async (id: string) => { if (window.confirm('정말로 이 거래 내역을 삭제하시겠습니까?')) { await deleteTransaction(id); }};
+  const handleDownload = async () => {
+    try {
+      const response = await downloadTemplateCSV();
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'transaction_template.csv');
+      document.body.appendChild(link);
+      link.click();
+
+      // ✅ [수정] parentNode를 거치지 않고, link 요소 자체를 직접 제거합니다.
+      link.remove();
+      
+      // URL 정리
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("CSV 템플릿 다운로드 실패:", error);
+      alert("파일을 다운로드하는 데 실패했습니다.");
+    }
+  };
   
   const handleFormSubmit = async (formData: ModalFormValues) => {
     // ✅ [핵심 수정] 소분류 ID가 없으면 대분류 ID를 사용하도록 변경
@@ -157,8 +180,9 @@ export default function TransactionPage() {
             <button onClick={() => setFilter('expense')} className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${filter === 'expense' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>지출</button>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleUpload} className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"><Upload size={16}/><span>내역 업로드</span></button>
-            <button onClick={handleAddNew} className="flex items-center gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700"><Plus size={16}/><span>새 거래 추가</span></button>
+            <button onClick={handleDownload} className="hidden md:flex flex items-center gap-2 px-4 py-2 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700"><Download size={16}/><span>양식 다운로드</span></button>
+            <button onClick={handleUpload} className="hidden md:flex flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700"><Upload size={16}/><span>내역 업로드</span></button>
+            <button onClick={handleAddNew} className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 md:w-auto"><Plus size={16}/><span>새 거래 추가</span></button>
           </div>
         </div>
         

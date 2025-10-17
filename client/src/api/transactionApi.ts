@@ -68,3 +68,13 @@ export const uploadTransactions = async (file: File): Promise<UploadTransactions
   });
   return response.data;
 };
+
+/**
+ * GET /api/v1/transactions/template
+ * CSV 파일 양식 다운로드
+ */
+export const downloadTemplateCSV = () => {
+  return axiosInstance.get('/transactions/template', {
+    responseType: 'blob'
+  });
+};
